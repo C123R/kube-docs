@@ -34,12 +34,14 @@ Events:            <none>
 
 ### But how containers get this static Cluster IP?
 
-Here comes the [kubelet](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/). As you might know, kubelet is responsible for scheduling container and ensures that those are running and healthy. Kubelet sets each new container's `/etc/resolv.conf` with cluster IP of the kube-dns service as a nameserver, with appropriate search options to allow for shorter hostnames to be used, If you check the kubelet process running on each k8s nodes, you will notice the --cluster-dns flag as shown below:
+Here comes the [kubelet](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/). `kubelet` is responsible for scheduling container and ensures that those are running and healthy. Kubelet sets each new container's `/etc/resolv.conf` with cluster IP of the kube-dns service as a nameserver, with appropriate search options to allow for shorter hostnames to be used.
+
+If you check the kubelet process running on each k8s nodes, you will notice the --cluster-dns flag as shown below:
 
 ```
 $ ps -ef | grep kubelet
 
-/usr/local/bin/kubelet --enable-server --node-labels=node-role.kubernetes.io/agent=,kubernetes.io/role=agent,agentpool=k8spool --address=0.0.0.0 --allow-privileged=true --authorization-mode=Webhook --azure-container-registry-config=/etc/kubernetes/azure.json --cgroups-per-qos=true --cloud-config=/etc/kubernetes/azure.json --cluster-dns=10.0.0.10 --cluster-domain=cluster.local --enforce-node-allocatable=pods --event-qps=0 
+/usr/local/bin/kubelet --enable-server --cluster-dns=10.0.0.10 --cluster-domain=cluster.local --node-labels=node-role.kubernetes.io/agent=,kubernetes.io/role=agent,agentpool=k8spool --address=0.0.0.0 --allow-privileged=true --authorization-mode=Webhook --azure-container-registry-config=/etc/kubernetes/azure.json --cgroups-per-qos=true --cloud-config=/etc/kubernetes/azure.json  --enforce-node-allocatable=pods --event-qps=0 
 ```
 Note: Trimmed output
 
@@ -50,7 +52,8 @@ Lets check this in real:
     ```
     $ kubectl create -f nginx.yaml
     deployment.apps/my-nginx created
-
+    ```
+    ```
     $ kubectl get pods
     NAME                                               READY   STATUS    RESTARTS   AGE
     my-nginx-756f645cd7-99pbm                          1/1     Running   0          27s
