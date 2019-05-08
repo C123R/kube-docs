@@ -73,5 +73,4 @@ Here we go, kube-dns static Cluster IP `10.0.0.10` is set as a DNS nameserver fo
 
 The kube-dns service listens for service and endpoint events from the Kubernetes API and updates its DNS records as needed. These events are triggered when you create, update or delete Kubernetes services and their associated pods.
 
-
-
+ ![redinessProbe](img/kube-dns.gif)
