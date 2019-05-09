@@ -3,11 +3,21 @@
 
 Kubernetes DNS or kube-dns is a DNS based service discovery on Kubernetes Cluster for defining DNS naming rules and resolving cluster IP of the service.
 
-The [kube-dns](https://github.com/kubernetes/dns) service prior to Kubernetes 1.11 is made up of three containers running in a kube-dns pod in the kube-system namespace. As of Kubernetes v1.12, [CoreDNS](https://coredns.io/manual/toc/) is the recommended DNS Server, replacing kube-dns.
+Service discovery works by listening for events in Kubernetes. Each services created within Kubernetes gets a DNS name. The DNS A record created for the service is of the form `<service_name>.<namespace_name>.svc.cluster.local.`
+
+The DNS name for the service resolves to the cluster IP of the service. The cluster IP is an internal IP assigned to the service which is resolvable within the cluster. Within the Kubernetes namespace, the service is resolvable directly by the `<service_name>` and outside of the namespace using `<service_name>.<namespace_name>`
+
+- For example:
+
+    Assume a service `foo` in the namespace `bar`. Pod running in the same namespace can access service doing DNS query for `foo`. Pod running in different namespace `quax` can access service doing DNS query for `foo.bar`
+
+    *Reference: Kubernetes Official Docs.*
 
 # How Does Kubernetes DNS Work
 
-As already mentioned currently Kubenretes DNS system can be setup either using CoreDNS or Kube-DNS. Regardless of the software handling DNS, both the add-ons schedule POD or PODs and a service with a Cluster IP.
+The [kube-dns](https://github.com/kubernetes/dns) service prior to Kubernetes 1.11 is made up of three containers running in a kube-dns pod in the kube-system namespace. As of Kubernetes v1.12, [CoreDNS](https://coredns.io/manual/toc/) is the recommended DNS Server, replacing kube-dns.
+
+Regardless of the software handling DNS, both the add-ons schedule POD or PODs and a service with a Cluster IP.
 
 As you can see below, its just a Kubernetes Service with cluster IP and port 53(well DNS) with 2 endpoints.
 
@@ -35,15 +45,16 @@ Events:            <none>
 
 Here comes the [kubelet](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/). `kubelet` is responsible for scheduling container and ensures that those are running and healthy. Kubelet sets each new container's `/etc/resolv.conf` with cluster IP of the kube-dns service as a nameserver, with appropriate search options to allow for shorter hostnames to be used.
 
-If you check the kubelet process running on each k8s nodes, you will notice the `--cluster-dns` (kube-dns cluster IP) and `--cluster-domain` (default local domain) flag as shown below:
+If you check the kubelet process running on each k8s nodes, you will notice the `--cluster-dns` (kube-dns cluster IP) and `--cluster-domain` (name of a local domain) flag as shown below:
 
 ```bash
 $ ps -ef | grep kubelet
 
 /usr/local/bin/kubelet --enable-server --cluster-dns=10.0.0.10 --cluster-domain=cluster.local --node-labels=node-role.kubernetes.io/agent=,kubernetes.io/role=agent,agentpool=k8spool --address=0.0.0.0 --allow-privileged=true --authorization-mode=Webhook --azure-container-registry-config=/etc/kubernetes/azure.json --cgroups-per-qos=true --cloud-config=/etc/kubernetes/azure.json  --enforce-node-allocatable=pods --event-qps=0 
+
 ```
 
-Note: Trimmed output
+*Note: Trimmed output*
 
 Lets check this in real:
 
@@ -70,7 +81,7 @@ Lets check this in real:
     options ndots:5
     ```
 
-Here we go, kube-dns static Cluster IP `10.0.0.10` is set as a DNS nameserver for our containers. Applications running in containers can then resolve the other services IP using this nameserver.
+Here we go, `kube-dns` static Cluster IP `10.0.0.10` is set as a DNS nameserver for our containers. Applications running in containers can then resolve the other services IP using this nameserver.
 
 ## But how kube-dns service does the magic?
 
